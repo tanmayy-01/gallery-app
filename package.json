@@ -7,7 +7,8 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "node scripts/patch-share.js"
   },
   "dependencies": {
     "@react-native-camera-roll/camera-roll": "^7.10.2",

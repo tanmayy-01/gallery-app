@@ -1,22 +1,15 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
-  Dimensions,
   FlatList,
-  Image,
-
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Album, MediaItem } from '../types';
-import { BackIcon, CheckIcon, PlayIcon, ShareIcon, StarIcon, TrashIcon } from './Icons';
+import { BackIcon, ShareIcon, StarIcon, TrashIcon } from './Icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const HORIZONTAL_PADDING = 16;
-const GAP = 8;
-const NUM_COLUMNS = 4;
-const ITEM_SIZE = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+import { GAP, HORIZONTAL_PADDING, NUM_COLUMNS, PhotoGridItem } from './PhotoGridItem';
 
 interface AlbumDetailViewProps {
   album: Album;
@@ -45,43 +38,20 @@ export const AlbumDetailView: React.FC<AlbumDetailViewProps> = ({
   onDeleteSelected,
   onExitSelection,
 }) => {
-  const renderItem = ({ item }: { item: MediaItem }) => {
-    const isSelected = selectedIds.has(item.id);
+  const renderItem = useCallback(
+    ({ item }: { item: MediaItem }) => (
+      <PhotoGridItem
+        item={item}
+        isSelected={selectedIds.has(item.id)}
+        isSelectionMode={isSelectionMode}
+        onPress={onPressItem}
+        onLongPress={onLongPressItem}
+      />
+    ),
+    [selectedIds, isSelectionMode, onPressItem, onLongPressItem]
+  );
 
-    return (
-      <TouchableOpacity
-        style={styles.itemContainer}
-        onPress={() => onPressItem(item)}
-        onLongPress={() => onLongPressItem(item)}
-        delayLongPress={300}
-        activeOpacity={0.85}
-      >
-        <Image source={{ uri: item.uri }} style={styles.thumbnail} resizeMode="cover" />
-
-        {/* Selected Highlight Overlay */}
-        {isSelected && (
-          <View style={styles.selectedBorderOverlay} pointerEvents="none" />
-        )}
-
-        {item.type === 'video' && (
-          <View style={styles.videoBadge}>
-            <PlayIcon size={12} color="#FFFFFF" />
-            {item.duration && <Text style={styles.durationText}>{item.duration}</Text>}
-          </View>
-        )}
-
-        {isSelectionMode && (
-          <View style={styles.selectionOverlay}>
-            {isSelected ? (
-              <CheckIcon size={22} color="#FFFFFF" />
-            ) : (
-              <View style={styles.unselectedCircle} />
-            )}
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
+  const keyExtractor = useCallback((item: MediaItem) => item.id, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -144,12 +114,14 @@ export const AlbumDetailView: React.FC<AlbumDetailViewProps> = ({
       <FlatList
         data={mediaItems}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         numColumns={NUM_COLUMNS}
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        extraData={selectedIds.size + '_' + (isSelectionMode ? '1' : '0')}
+        initialNumToRender={16}
+        maxToRenderPerBatch={16}
+        windowSize={7}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyTitle}>This Album is Empty</Text>
@@ -250,59 +222,6 @@ const styles = StyleSheet.create({
   columnWrapper: {
     gap: GAP,
     marginBottom: GAP,
-  },
-  itemContainer: {
-    width: ITEM_SIZE,
-    height: ITEM_SIZE,
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#1E201B',
-    position: 'relative',
-  },
-  selectedBorderOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderWidth: 2.5,
-    borderColor: '#9DA74E',
-    borderRadius: 10,
-    backgroundColor: 'rgba(157, 167, 78, 0.15)',
-  },
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-  },
-  videoBadge: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  durationText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  selectionOverlay: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-  },
-  unselectedCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
   emptyContainer: {
     paddingVertical: 80,

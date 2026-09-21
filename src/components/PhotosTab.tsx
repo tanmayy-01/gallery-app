@@ -1,21 +1,14 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import {
-  Dimensions,
   FlatList,
-  Image,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { MediaItem } from '../types';
-import { CheckIcon, PlayIcon } from './Icons';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const HORIZONTAL_PADDING = 16;
-const GAP = 8;
-const NUM_COLUMNS = 4;
-const ITEM_SIZE = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+import { GAP, HORIZONTAL_PADDING, PhotoGridItem } from './PhotoGridItem';
 
 interface MonthSectionData {
   title: string;
@@ -32,6 +25,40 @@ interface PhotosTabProps {
   onClearAlbumFilter?: () => void;
 }
 
+interface SectionBlockProps {
+  section: MonthSectionData;
+  selectedIds: Set<string>;
+  isSelectionMode: boolean;
+  onPressItem: (item: MediaItem) => void;
+  onLongPressItem: (item: MediaItem) => void;
+}
+
+const SectionBlock = memo<SectionBlockProps>(
+  ({ section, selectedIds, isSelectionMode, onPressItem, onLongPressItem }) => {
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+          <Text style={styles.sectionCount}>{section.data.length} items</Text>
+        </View>
+
+        <View style={styles.gridContainer}>
+          {section.data.map((item) => (
+            <PhotoGridItem
+              key={item.id}
+              item={item}
+              isSelected={selectedIds.has(item.id)}
+              isSelectionMode={isSelectionMode}
+              onPress={onPressItem}
+              onLongPress={onLongPressItem}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  }
+);
+
 export const PhotosTab: React.FC<PhotosTabProps> = ({
   sections,
   selectedIds,
@@ -41,81 +68,32 @@ export const PhotosTab: React.FC<PhotosTabProps> = ({
   activeAlbumTitle,
   onClearAlbumFilter,
 }) => {
-  const renderItem = ({ item }: { item: MediaItem }) => {
-    const isSelected = selectedIds.has(item.id);
+  const renderSection = useCallback(
+    ({ item: section }: { item: MonthSectionData }) => (
+      <SectionBlock
+        section={section}
+        selectedIds={selectedIds}
+        isSelectionMode={isSelectionMode}
+        onPressItem={onPressItem}
+        onLongPressItem={onLongPressItem}
+      />
+    ),
+    [selectedIds, isSelectionMode, onPressItem, onLongPressItem]
+  );
 
-    return (
-      <TouchableOpacity
-        style={styles.itemContainer}
-        onPress={() => onPressItem(item)}
-        onLongPress={() => onLongPressItem(item)}
-        delayLongPress={300}
-        activeOpacity={0.85}
-      >
-        <Image
-          source={{ uri: item.uri }}
-          style={styles.thumbnail}
-          resizeMode="cover"
-        />
-
-        {/* Selected Highlight Overlay */}
-        {isSelected && (
-          <View style={styles.selectedBorderOverlay} pointerEvents="none" />
-        )}
-
-        {/* Video Duration Badge */}
-        {item.type === 'video' && (
-          <View style={styles.videoBadge}>
-            <PlayIcon size={12} color="#FFFFFF" />
-            {item.duration && (
-              <Text style={styles.durationText}>{item.duration}</Text>
-            )}
-          </View>
-        )}
-
-        {/* Selection Indicator */}
-        {isSelectionMode && (
-          <View style={styles.selectionOverlay}>
-            {isSelected ? (
-              <CheckIcon size={22} color="#FFFFFF" />
-            ) : (
-              <View style={styles.unselectedCircle} />
-            )}
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
-  const renderSection = ({ item: section }: { item: MonthSectionData }) => {
-    return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <Text style={styles.sectionCount}>{section.data.length} items</Text>
-        </View>
-
-        <FlatList
-          data={section.data}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          numColumns={NUM_COLUMNS}
-          scrollEnabled={false}
-          columnWrapperStyle={styles.columnWrapper}
-          extraData={selectedIds.size + '_' + (isSelectionMode ? '1' : '0')}
-        />
-      </View>
-    );
-  };
+  const keyExtractor = useCallback((item: MonthSectionData) => item.title, []);
 
   return (
     <FlatList
       data={sections}
       renderItem={renderSection}
-      keyExtractor={(item) => item.title}
+      keyExtractor={keyExtractor}
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
-      extraData={selectedIds.size + '_' + (isSelectionMode ? '1' : '0')}
+      initialNumToRender={3}
+      maxToRenderPerBatch={4}
+      windowSize={7}
+      removeClippedSubviews={Platform.OS === 'android'}
       ListHeaderComponent={
         activeAlbumTitle ? (
           <View style={styles.filterBanner}>
@@ -201,62 +179,10 @@ const styles = StyleSheet.create({
     color: '#7F846B',
     fontWeight: '500',
   },
-  columnWrapper: {
-    gap: GAP,
-    marginBottom: GAP,
-  },
-  itemContainer: {
-    width: ITEM_SIZE,
-    height: ITEM_SIZE,
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#1E201B',
-    position: 'relative',
-  },
-  selectedBorderOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderWidth: 2.5,
-    borderColor: '#9DA74E',
-    borderRadius: 10,
-    backgroundColor: 'rgba(157, 167, 78, 0.15)',
-  },
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-  },
-  videoBadge: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
+  gridContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  durationText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  selectionOverlay: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-  },
-  unselectedCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    flexWrap: 'wrap',
+    gap: GAP,
   },
   emptyContainer: {
     paddingVertical: 60,

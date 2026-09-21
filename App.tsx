@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -226,24 +226,7 @@ function AppContent() {
   };
 
   // Selection handlers
-  const handleItemPress = (item: MediaItem) => {
-    if (isSelectionMode) {
-      toggleItemSelection(item.id);
-    } else {
-      setViewingItem(item);
-    }
-  };
-
-  const handleItemLongPress = (item: MediaItem) => {
-    if (!isSelectionMode) {
-      setIsSelectionMode(true);
-      setSelectedIds(new Set([item.id]));
-    } else {
-      toggleItemSelection(item.id);
-    }
-  };
-
-  const toggleItemSelection = (id: string) => {
+  const toggleItemSelection = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -256,21 +239,47 @@ function AppContent() {
       }
       return next;
     });
-  };
+  }, []);
 
-  const handleExitSelection = () => {
+  const handleItemPress = useCallback(
+    (item: MediaItem) => {
+      if (isSelectionMode) {
+        toggleItemSelection(item.id);
+      } else {
+        setViewingItem(item);
+      }
+    },
+    [isSelectionMode, toggleItemSelection]
+  );
+
+  const handleItemLongPress = useCallback(
+    (item: MediaItem) => {
+      if (!isSelectionMode) {
+        setIsSelectionMode(true);
+        setSelectedIds(new Set([item.id]));
+      } else {
+        toggleItemSelection(item.id);
+      }
+    },
+    [isSelectionMode, toggleItemSelection]
+  );
+
+  const handleExitSelection = useCallback(() => {
     setIsSelectionMode(false);
     setSelectedIds(new Set());
-  };
+  }, []);
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     const targetPool = activeDetailedAlbum ? detailedAlbumMedia : sortedMedia;
-    if (selectedIds.size === targetPool.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(targetPool.map((i) => i.id)));
-    }
-  };
+    setSelectedIds((prev) => {
+      if (prev.size === targetPool.length) {
+        setIsSelectionMode(false);
+        return new Set();
+      } else {
+        return new Set(targetPool.map((i) => i.id));
+      }
+    });
+  }, [activeDetailedAlbum, detailedAlbumMedia, sortedMedia]);
 
   // Share handlers
   const handleShareSelected = () => {

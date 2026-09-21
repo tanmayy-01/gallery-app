@@ -4,6 +4,7 @@ import {
   Dimensions,
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,9 +14,7 @@ import {
 } from 'react-native';
 import RNShare, { Social } from 'react-native-share';
 import { MediaItem } from '../types';
-import { CloseIcon } from './Icons';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { CloseIcon, ShareIcon } from './Icons';
 
 interface ShareModalProps {
   visible: boolean;
@@ -28,14 +27,71 @@ interface ShareDestination {
   name: string;
   color: string;
   iconText: string;
+  social?: string;
+  packageName?: string;
 }
 
 const DESTINATIONS: ShareDestination[] = [
-  { id: 'whatsapp', name: 'WhatsApp', color: '#25D366', iconText: 'WA' },
-  { id: 'instagram', name: 'Instagram', color: '#E1306C', iconText: 'IG' },
-  { id: 'telegram', name: 'Telegram', color: '#0088CC', iconText: 'TG' },
-  { id: 'messages', name: 'Messages', color: '#007AFF', iconText: 'SMS' },
-  { id: 'system', name: 'More Apps', color: '#9DA74E', iconText: '•••' },
+  {
+    id: 'whatsapp',
+    name: 'WhatsApp',
+    color: '#25D366',
+    iconText: 'WA',
+    social: Social.Whatsapp,
+    packageName: 'com.whatsapp',
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    color: '#E1306C',
+    iconText: 'IG',
+    social: Social.Instagram,
+    packageName: 'com.instagram.android',
+  },
+  {
+    id: 'telegram',
+    name: 'Telegram',
+    color: '#2AABEE',
+    iconText: 'TG',
+    social: Social.Telegram,
+    packageName: 'org.telegram.messenger',
+  },
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    color: '#1877F2',
+    iconText: 'FB',
+    social: Social.Facebook,
+    packageName: 'com.facebook.katana',
+  },
+  {
+    id: 'twitter',
+    name: 'X / Twitter',
+    color: '#000000',
+    iconText: '𝕏',
+    social: Social.Twitter,
+    packageName: 'com.twitter.android',
+  },
+  {
+    id: 'email',
+    name: 'Email',
+    color: '#EA4335',
+    iconText: '✉',
+    social: Social.Email,
+  },
+  {
+    id: 'sms',
+    name: 'Messages',
+    color: '#34C759',
+    iconText: 'SMS',
+    social: Social.Sms,
+  },
+  {
+    id: 'system',
+    name: 'More',
+    color: '#3E4330',
+    iconText: '•••',
+  },
 ];
 
 export const ShareModal: React.FC<ShareModalProps> = ({
@@ -43,141 +99,110 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   items,
   onClose,
 }) => {
-  if (items.length === 0) return null;
+  if (!visible || items.length === 0) return null;
 
   const handleShareToDestination = async (dest: ShareDestination) => {
-    try {
-      const isVideo = items.some((i) => i.type === 'video');
-      const mimeType = isVideo ? 'video/*' : 'image/*';
-      const isMulti = items.length > 1;
+    onClose();
 
-      if (dest.id === 'whatsapp') {
-        try {
-          if (!isMulti) {
-            await RNShare.shareSingle({
-              social: Social.Whatsapp,
+    // Small delay to allow modal dismiss animation before launching intent chooser
+    setTimeout(async () => {
+      try {
+        const hasVideos = items.some((i) => i.type === 'video');
+        const hasPhotos = items.some((i) => i.type === 'photo');
+        const mimeType = hasVideos && hasPhotos ? '*/*' : hasVideos ? 'video/*' : 'image/*';
+        const isMulti = items.length > 1;
+
+        // 1. System / More Apps
+        if (dest.id === 'system' || !dest.social) {
+          if (isMulti) {
+            await RNShare.open({
+              urls: items.map((i) => i.uri),
+              type: mimeType,
+              title: `Share ${items.length} items`,
+              failOnCancel: false,
+            });
+          } else {
+            await RNShare.open({
               url: items[0].uri,
               type: mimeType,
+              title: items[0].title || 'Share Media',
               filename: items[0].title,
+              failOnCancel: false,
             });
-            onClose();
-            return;
-          } else {
-            await RNShare.open({
-              urls: items.map((i) => i.uri),
-              type: mimeType,
-            });
-            onClose();
-            return;
           }
-        } catch (singleErr: any) {
-          console.log('WhatsApp share fallback to system open:', singleErr?.message);
+          return;
+        }
+
+        // 2. Multi-item sharing: individual apps don't support multi via shareSingle, use open()
+        if (isMulti) {
           await RNShare.open({
             urls: items.map((i) => i.uri),
             type: mimeType,
+            title: `Share ${items.length} items to ${dest.name}`,
+            failOnCancel: false,
           });
-          onClose();
           return;
         }
-      }
 
-      if (dest.id === 'instagram') {
-        try {
-          if (!isMulti) {
-            await RNShare.shareSingle({
-              social: Social.Instagram,
-              url: items[0].uri,
-              type: mimeType,
-            });
-            onClose();
-            return;
-          } else {
-            await RNShare.open({
-              urls: items.map((i) => i.uri),
-              type: mimeType,
-            });
-            onClose();
-            return;
+        // 3. Single-item direct social app sharing
+        if (Platform.OS === 'android' && dest.packageName) {
+          try {
+            const check = await RNShare.isPackageInstalled(dest.packageName);
+            if (check && check.isInstalled === false) {
+              // App not installed on device, fallback to system share sheet
+              await RNShare.open({
+                url: items[0].uri,
+                type: mimeType,
+                title: items[0].title || 'Share Media',
+                filename: items[0].title,
+                failOnCancel: false,
+              });
+              return;
+            }
+          } catch {
+            // If package check fails, attempt shareSingle anyway
           }
-        } catch (singleErr: any) {
-          console.log('Instagram share fallback to system open:', singleErr?.message);
-          await RNShare.open({
-            urls: items.map((i) => i.uri),
+        }
+
+        try {
+          await RNShare.shareSingle({
+            social: dest.social as any,
+            url: items[0].uri,
             type: mimeType,
+            filename: items[0].title,
           });
-          onClose();
-          return;
-        }
-      }
-
-      if (dest.id === 'telegram') {
-        try {
-          if (!isMulti) {
-            await RNShare.shareSingle({
-              social: Social.Telegram,
-              url: items[0].uri,
-              type: mimeType,
-            });
-            onClose();
-            return;
-          }
         } catch (singleErr: any) {
-          console.log('Telegram share fallback:', singleErr?.message);
+          console.log(`${dest.name} share fallback to system open:`, singleErr?.message);
+          await RNShare.open({
+            url: items[0].uri,
+            type: mimeType,
+            title: items[0].title || 'Share Media',
+            filename: items[0].title,
+            failOnCancel: false,
+          });
         }
-        await RNShare.open({
-          urls: items.map((i) => i.uri),
-          type: mimeType,
-        });
-        onClose();
-        return;
-      }
-
-      if (dest.id === 'messages') {
-        try {
-          if (!isMulti) {
-            await RNShare.shareSingle({
-              social: Social.Sms,
-              url: items[0].uri,
-              type: mimeType,
-            });
-            onClose();
-            return;
-          }
-        } catch (singleErr: any) {
-          console.log('Messages share fallback:', singleErr?.message);
+      } catch (error: any) {
+        if (
+          error &&
+          error.message &&
+          !error.message.includes('dismissed') &&
+          !error.message.includes('cancel') &&
+          !error.message.includes('User did not share') &&
+          !error.message.includes('CANCELLED')
+        ) {
+          Alert.alert('Share', error?.message || 'Could not share file.');
         }
-        await RNShare.open({
-          urls: items.map((i) => i.uri),
-          type: mimeType,
-        });
-        onClose();
-        return;
       }
+    }, 150);
+  };
 
-      // Default: Native System Share Sheet sending actual binary image/video file(s)
-      if (isMulti) {
-        await RNShare.open({
-          urls: items.map((i) => i.uri),
-          type: mimeType,
-        });
-      } else {
-        await RNShare.open({
-          url: items[0].uri,
-          type: mimeType,
-        });
-      }
-      onClose();
-    } catch (error: any) {
-      if (
-        error &&
-        error.message &&
-        !error.message.includes('dismissed') &&
-        !error.message.includes('cancel') &&
-        !error.message.includes('User did not share')
-      ) {
-        Alert.alert('Share', error?.message || 'Could not share file.');
-      }
-    }
+  const handleShareViaSystem = () => {
+    handleShareToDestination({
+      id: 'system',
+      name: 'System Share',
+      color: '#3E4330',
+      iconText: '•••',
+    });
   };
 
   const totalSizeBytes = items.reduce((sum, item) => sum + item.sizeBytes, 0);
@@ -187,6 +212,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       : totalSizeBytes > 0
       ? (totalSizeBytes / (1024 * 1024)).toFixed(1) + ' MB'
       : '';
+
+  const shareTitle =
+    items.length === 1
+      ? items[0].type === 'video'
+        ? 'Share Video'
+        : 'Share Photo'
+      : `Share ${items.length} Items`;
 
   return (
     <Modal
@@ -203,9 +235,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
               <View style={styles.header}>
                 <View>
-                  <Text style={styles.headerTitle}>
-                    Share {items.length} {items.length === 1 ? 'Media' : 'Items'}
-                  </Text>
+                  <Text style={styles.headerTitle}>{shareTitle}</Text>
                   {formattedTotalSize ? (
                     <Text style={styles.headerSubtitle}>
                       Total size: {formattedTotalSize}
@@ -228,7 +258,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     <Image source={{ uri: item.uri }} style={styles.previewThumb} />
                     {item.type === 'video' && (
                       <View style={styles.videoBadge}>
-                        <Text style={styles.videoBadgeText}>VIDEO</Text>
+                        <Text style={styles.videoBadgeText}>
+                          {item.duration || 'VIDEO'}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -237,13 +269,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
               <Text style={styles.sectionHeader}>Share to</Text>
 
+              {/* Destinations Grid */}
               <View style={styles.destinationsGrid}>
                 {DESTINATIONS.map((dest) => (
                   <TouchableOpacity
                     key={dest.id}
                     style={styles.destItem}
                     onPress={() => handleShareToDestination(dest)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.75}
                   >
                     <View style={[styles.destIconWrapper, { backgroundColor: dest.color }]}>
                       <Text style={styles.destIconText}>{dest.iconText}</Text>
@@ -254,6 +287,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   </TouchableOpacity>
                 ))}
               </View>
+
+              {/* Primary System Share Action Button */}
+              <TouchableOpacity
+                style={styles.systemShareButton}
+                onPress={handleShareViaSystem}
+                activeOpacity={0.85}
+              >
+                <ShareIcon size={18} color="#1A1C16" />
+                <Text style={styles.systemShareButtonText}>Share via Other Apps</Text>
+              </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -277,7 +320,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 24,
+    paddingBottom: 22,
     borderWidth: 1,
     borderColor: '#2F3323',
     shadowColor: '#000',
@@ -342,32 +385,33 @@ const styles = StyleSheet.create({
   },
   videoBadgeText: {
     color: '#FFFFFF',
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: '800',
   },
   sectionHeader: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#ACB299',
-    marginTop: 6,
-    marginBottom: 16,
-    letterSpacing: 0.5,
+    marginTop: 2,
+    marginBottom: 14,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   destinationsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 18,
+    rowGap: 16,
+    marginBottom: 18,
   },
   destItem: {
-    width: '30%',
+    width: '23%',
     alignItems: 'center',
   },
   destIconWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
@@ -379,12 +423,28 @@ const styles = StyleSheet.create({
   },
   destIconText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
   destName: {
     color: '#DCE0D0',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
+    textAlign: 'center',
+  },
+  systemShareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#9DA74E',
+    borderRadius: 14,
+    paddingVertical: 13,
+    gap: 8,
+    marginTop: 4,
+  },
+  systemShareButtonText: {
+    color: '#1A1C16',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
