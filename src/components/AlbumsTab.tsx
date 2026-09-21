@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Album } from '../types';
-import { StarIcon } from './Icons';
+import { Album, AlbumsTabProps } from '../types';
+import { AddIcon, StarIcon } from './Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 20;
@@ -18,12 +18,6 @@ const NUM_COLUMNS = 2;
 const CARD_WIDTH = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - GAP) / NUM_COLUMNS;
 const CARD_HEIGHT = CARD_WIDTH * 1.25;
 
-interface AlbumsTabProps {
-  albums: Album[];
-  onSelectAlbum: (album: Album) => void;
-  onToggleFavoriteAlbum?: (albumId: string) => void;
-  onPressCreateAlbum: () => void;
-}
 
 export const AlbumsTab: React.FC<AlbumsTabProps> = ({
   albums,
@@ -98,7 +92,7 @@ export const AlbumsTab: React.FC<AlbumsTabProps> = ({
         activeOpacity={0.85}
         accessibilityLabel="Create New Album"
       >
-        <Text style={styles.plusIcon}>+</Text>
+        <AddIcon size={28} color="#1A1C16" />
       </TouchableOpacity>
     </View>
   );
@@ -111,7 +105,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: HORIZONTAL_PADDING,
-    paddingBottom: 90, // extra padding so FAB does not obscure content
+    paddingBottom: 90,
     paddingTop: 8,
   },
   columnWrapper: {

@@ -1,138 +1,87 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 
-interface IconProps {
+export { Ionicons };
+
+export interface IconProps {
   size?: number;
   color?: string;
 }
 
 export const CameraIcon = ({ size = 22, color = '#FFFFFF' }: IconProps) => (
-  <View style={[styles.center, { width: size, height: size }]}>
-    <View
-      style={{
-        width: size * 0.9,
-        height: size * 0.7,
-        borderRadius: 4,
-        borderWidth: 2,
-        borderColor: color,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <View
-        style={{
-          width: size * 0.35,
-          height: size * 0.35,
-          borderRadius: size * 0.2,
-          borderWidth: 1.8,
-          borderColor: color,
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          top: -3,
-          right: 2,
-          width: 3,
-          height: 2,
-          backgroundColor: color,
-          borderRadius: 1,
-        }}
-      />
-    </View>
-  </View>
+  <Ionicons name="camera-outline" size={size} color={color} />
 );
 
-export const StarIcon = ({ size = 18, color = '#FFFFFF', filled = false }: IconProps & { filled?: boolean }) => (
+export const StarIcon = ({
+  size = 18,
+  color = '#FFFFFF',
+  filled = false,
+}: IconProps & { filled?: boolean }) => (
   <View
     style={[
       styles.starCircle,
       {
-        width: size + 6,
-        height: size + 6,
-        borderRadius: (size + 6) / 2,
+        width: size + 8,
+        height: size + 8,
+        borderRadius: (size + 8) / 2,
       },
     ]}
   >
-    <Text style={{ fontSize: size * 0.75, color: filled ? '#E8C547' : '#555555', textAlign: 'center' }}>
-      ★
-    </Text>
+    <Ionicons
+      name={filled ? 'star' : 'star-outline'}
+      size={size}
+      color={filled ? '#E8C547' : '#777777'}
+    />
   </View>
 );
 
 export const CheckIcon = ({ size = 20, color = '#FFFFFF' }: IconProps) => (
   <View
-    style={{
-      width: size,
-      height: size,
-      borderRadius: size / 2,
-      backgroundColor: '#9DA74E',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 2,
-      borderColor: '#FFFFFF',
-    }}
+    style={[
+      styles.checkCircle,
+      {
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+      },
+    ]}
   >
-    <Text style={{ color: '#FFFFFF', fontSize: size * 0.65, fontWeight: '900', lineHeight: size * 0.8 }}>
-      ✓
-    </Text>
+    <Ionicons name="checkmark-sharp" size={size * 0.72} color={color} />
   </View>
 );
 
 export const PlayIcon = ({ size = 20, color = '#FFFFFF' }: IconProps) => (
-  <View
-    style={{
-      width: size,
-      height: size,
-      borderRadius: size / 2,
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}
-  >
-    <Text style={{ color, fontSize: size * 0.5, marginLeft: 2 }}>▶</Text>
-  </View>
+  <Ionicons name="play" size={size} color={color} />
 );
 
 export const SortIcon = ({ size = 20, color = '#FFFFFF' }: IconProps) => (
-  <View style={[styles.center, { width: size, height: size }]}>
-    <View style={{ width: size * 0.8, height: 2, backgroundColor: color, marginBottom: 3, borderRadius: 1 }} />
-    <View style={{ width: size * 0.6, height: 2, backgroundColor: color, marginBottom: 3, borderRadius: 1 }} />
-    <View style={{ width: size * 0.35, height: 2, backgroundColor: color, borderRadius: 1 }} />
-  </View>
+  <Ionicons name="swap-vertical" size={size} color={color} />
 );
 
 export const ShareIcon = ({ size = 20, color = '#FFFFFF' }: IconProps) => (
-  <View style={[styles.center, { width: size, height: size }]}>
-    <Text style={{ color, fontSize: size * 0.9, fontWeight: '700' }}>↗</Text>
-  </View>
+  <Ionicons name="share-social-outline" size={size} color={color} />
 );
 
 export const TrashIcon = ({ size = 20, color = '#FF453A' }: IconProps) => (
-  <View style={[styles.center, { width: size, height: size }]}>
-    <Text style={{ color, fontSize: size * 0.85 }}>🗑</Text>
-  </View>
+  <Ionicons name="trash-outline" size={size} color={color} />
 );
 
 export const CloseIcon = ({ size = 22, color = '#FFFFFF' }: IconProps) => (
-  <View style={[styles.center, { width: size, height: size }]}>
-    <Text style={{ color, fontSize: size * 0.9, fontWeight: '600' }}>✕</Text>
-  </View>
+  <Ionicons name="close" size={size} color={color} />
 );
 
-export const BackIcon = ({ size = 22, color = '#FFFFFF' }: IconProps) => (
-  <View style={[styles.center, { width: size, height: size }]}>
-    <Text style={{ color, fontSize: size * 1.1, fontWeight: '600' }}>‹</Text>
-  </View>
+export const BackIcon = ({ size = 24, color = '#FFFFFF' }: IconProps) => (
+  <Ionicons name="chevron-back" size={size} color={color} />
+);
+
+export const AddIcon = ({ size = 24, color = '#FFFFFF' }: IconProps) => (
+  <Ionicons name="add" size={size} color={color} />
 );
 
 const styles = StyleSheet.create({
-  center: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   starCircle: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -140,5 +89,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
+  },
+  checkCircle: {
+    backgroundColor: '#9DA74E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
 });

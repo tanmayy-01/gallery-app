@@ -7,49 +7,9 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { SortType } from '../types';
+import { SortModalProps } from '../types';
 import { CheckIcon, CloseIcon } from './Icons';
-
-interface SortModalProps {
-  visible: boolean;
-  activeSort: SortType;
-  onSelectSort: (sort: SortType) => void;
-  onClose: () => void;
-}
-
-interface SortOptionItem {
-  key: SortType;
-  title: string;
-  subtitle: string;
-  category: 'Date' | 'Size';
-}
-
-const SORT_OPTIONS: SortOptionItem[] = [
-  {
-    key: 'date-desc',
-    title: 'Date: Newest First',
-    subtitle: 'Recent media appears at top',
-    category: 'Date',
-  },
-  {
-    key: 'date-asc',
-    title: 'Date: Oldest First',
-    subtitle: 'Oldest media appears first',
-    category: 'Date',
-  },
-  {
-    key: 'size-desc',
-    title: 'Size: Largest First',
-    subtitle: 'High capacity media first',
-    category: 'Size',
-  },
-  {
-    key: 'size-asc',
-    title: 'Size: Smallest First',
-    subtitle: 'Low capacity media first',
-    category: 'Size',
-  },
-];
+import { SORT_OPTIONS } from '../constants';
 
 export const SortModal: React.FC<SortModalProps> = ({
   visible,

@@ -9,21 +9,12 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { MediaItem } from '../types';
-import { BackIcon, PlayIcon, ShareIcon, StarIcon, TrashIcon } from './Icons';
+import { MediaItem, MediaViewerModalProps } from '../types';
+import { BackIcon, Ionicons, PlayIcon, ShareIcon, StarIcon, TrashIcon } from './Icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-interface MediaViewerModalProps {
-  visible: boolean;
-  initialItem: MediaItem | null;
-  allItems: MediaItem[];
-  onClose: () => void;
-  onShare: (item: MediaItem) => void;
-  onDelete: (item: MediaItem) => void;
-  onToggleFavorite?: (itemId: string) => void;
-}
 
 export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
   visible,
@@ -131,14 +122,14 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
             {/* Previous Arrow Navigation */}
             {currentIndex > 0 && showControls && (
               <TouchableOpacity style={styles.navArrowLeft} onPress={handlePrev} activeOpacity={0.8}>
-                <Text style={styles.navArrowText}>‹</Text>
+                <Ionicons name="chevron-back" size={26} color="#FFFFFF" />
               </TouchableOpacity>
             )}
 
             {/* Next Arrow Navigation */}
             {currentIndex < allItems.length - 1 && showControls && (
               <TouchableOpacity style={styles.navArrowRight} onPress={handleNext} activeOpacity={0.8}>
-                <Text style={styles.navArrowText}>›</Text>
+                <Ionicons name="chevron-forward" size={26} color="#FFFFFF" />
               </TouchableOpacity>
             )}
 

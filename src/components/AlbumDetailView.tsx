@@ -6,24 +6,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Album, MediaItem } from '../types';
+import { Album, AlbumDetailViewProps, MediaItem } from '../types';
 import { BackIcon, ShareIcon, StarIcon, TrashIcon } from './Icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GAP, HORIZONTAL_PADDING, NUM_COLUMNS, PhotoGridItem } from './PhotoGridItem';
 
-interface AlbumDetailViewProps {
-  album: Album;
-  mediaItems: MediaItem[];
-  selectedIds: Set<string>;
-  isSelectionMode: boolean;
-  onBack: () => void;
-  onPressItem: (item: MediaItem) => void;
-  onLongPressItem: (item: MediaItem) => void;
-  onToggleFavoriteAlbum?: (albumId: string) => void;
-  onShareSelected?: () => void;
-  onDeleteSelected?: () => void;
-  onExitSelection?: () => void;
-}
 
 export const AlbumDetailView: React.FC<AlbumDetailViewProps> = ({
   album,

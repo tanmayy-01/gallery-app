@@ -30,7 +30,9 @@ function AppContent() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [activeTab, setActiveTab] = useState<ActiveTab>('photos');
-  const [activeDetailedAlbum, setActiveDetailedAlbum] = useState<Album | null>(null);
+  const [activeDetailedAlbum, setActiveDetailedAlbum] = useState<Album | null>(
+    null,
+  );
 
   // Selection Mode State
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
@@ -54,60 +56,54 @@ function AppContent() {
   // Physical Back Press Handler
   useEffect(() => {
     const onBackPress = () => {
-      // 1. Close Fullscreen Media Viewer
       if (viewingItem !== null) {
         setViewingItem(null);
         return true;
       }
 
-      // 2. Close Camera Modal
       if (isCameraModalOpen) {
         setIsCameraModalOpen(false);
         return true;
       }
 
-      // 3. Close Create Album Modal
       if (isCreateAlbumOpen) {
         setIsCreateAlbumOpen(false);
         return true;
       }
 
-      // 4. Close Share Modal
       if (isShareModalOpen) {
         setIsShareModalOpen(false);
         return true;
       }
 
-      // 5. Close Sort Modal
       if (isSortModalOpen) {
         setIsSortModalOpen(false);
         return true;
       }
 
-      // 6. Exit Multi-Selection Mode
       if (isSelectionMode) {
         setIsSelectionMode(false);
         setSelectedIds(new Set());
         return true;
       }
 
-      // 7. Exit Album Detail View back to Albums list
       if (activeDetailedAlbum !== null) {
         setActiveDetailedAlbum(null);
         return true;
       }
 
-      // 8. If on Albums tab, return to Photos tab
       if (activeTab === 'albums') {
         setActiveTab('photos');
         return true;
       }
 
-      // 9. Allow default behavior (minimize / exit app)
       return false;
     };
 
-    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress,
+    );
     return () => subscription.remove();
   }, [
     viewingItem,
@@ -125,7 +121,8 @@ function AppContent() {
     async function initDeviceMedia() {
       try {
         setIsLoading(true);
-        const { media, albums: deviceAlbums } = await loadDeviceMediaAndAlbums();
+        const { media, albums: deviceAlbums } =
+          await loadDeviceMediaAndAlbums();
         if (media && media.length > 0) {
           setMediaItems(media);
         }
@@ -146,9 +143,13 @@ function AppContent() {
     const list = [...mediaItems];
     switch (sortType) {
       case 'date-desc':
-        return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return list.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        );
       case 'date-asc':
-        return list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        return list.sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
       case 'size-desc':
         return list.sort((a, b) => b.sizeBytes - a.sizeBytes);
       case 'size-asc':
@@ -158,11 +159,10 @@ function AppContent() {
     }
   }, [mediaItems, sortType]);
 
-  // Group into Month sections for the Photos tab
   const monthSections = useMemo(() => {
     const map = new Map<string, MediaItem[]>();
 
-    sortedMedia.forEach((item) => {
+    sortedMedia.forEach(item => {
       const sectionKey = item.monthSection;
       if (!map.has(sectionKey)) {
         map.set(sectionKey, []);
@@ -179,27 +179,30 @@ function AppContent() {
   // Media inside the currently open detailed album
   const detailedAlbumMedia = useMemo(() => {
     if (!activeDetailedAlbum) return [];
-    if (activeDetailedAlbum.id === 'videos' || activeDetailedAlbum.id === 'video') {
-      return sortedMedia.filter((item) => item.type === 'video');
+    if (
+      activeDetailedAlbum.id === 'videos' ||
+      activeDetailedAlbum.id === 'video'
+    ) {
+      return sortedMedia.filter(item => item.type === 'video');
     }
-    return sortedMedia.filter((item) => item.albumId === activeDetailedAlbum.id);
+    return sortedMedia.filter(item => item.albumId === activeDetailedAlbum.id);
   }, [activeDetailedAlbum, sortedMedia]);
 
-  // Launch Real Camera
+
   const handlePressCamera = async () => {
     try {
       const capturedMedia = await openRealDeviceCamera();
       if (capturedMedia) {
         setIsSavingPhoto(true);
-        // Automatically save and display immediately in the application
-        setMediaItems((prev) => [capturedMedia, ...prev]);
-        setAlbums((prev) => {
-          const cameraAlbumExists = prev.some((a) => a.id === 'camera');
+     
+        setMediaItems(prev => [capturedMedia, ...prev]);
+        setAlbums(prev => {
+          const cameraAlbumExists = prev.some(a => a.id === 'camera');
           if (cameraAlbumExists) {
-            return prev.map((alb) =>
+            return prev.map(alb =>
               alb.id === 'camera'
                 ? { ...alb, count: alb.count + 1, coverUri: capturedMedia.uri }
-                : alb
+                : alb,
             );
           } else {
             const newCamAlbum: Album = {
@@ -213,21 +216,21 @@ function AppContent() {
           }
         });
 
-        // Clear saving indicator after brief saving feedback
+       
         setTimeout(() => {
           setIsSavingPhoto(false);
         }, 500);
       }
     } catch (err) {
       setIsSavingPhoto(false);
-      // Fallback to interactive camera modal if native camera isn't available
+     
       setIsCameraModalOpen(true);
     }
   };
 
-  // Selection handlers
+
   const toggleItemSelection = useCallback((id: string) => {
-    setSelectedIds((prev) => {
+    setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -249,7 +252,7 @@ function AppContent() {
         setViewingItem(item);
       }
     },
-    [isSelectionMode, toggleItemSelection]
+    [isSelectionMode, toggleItemSelection],
   );
 
   const handleItemLongPress = useCallback(
@@ -261,7 +264,7 @@ function AppContent() {
         toggleItemSelection(item.id);
       }
     },
-    [isSelectionMode, toggleItemSelection]
+    [isSelectionMode, toggleItemSelection],
   );
 
   const handleExitSelection = useCallback(() => {
@@ -271,19 +274,19 @@ function AppContent() {
 
   const handleSelectAll = useCallback(() => {
     const targetPool = activeDetailedAlbum ? detailedAlbumMedia : sortedMedia;
-    setSelectedIds((prev) => {
+    setSelectedIds(prev => {
       if (prev.size === targetPool.length) {
         setIsSelectionMode(false);
         return new Set();
       } else {
-        return new Set(targetPool.map((i) => i.id));
+        return new Set(targetPool.map(i => i.id));
       }
     });
   }, [activeDetailedAlbum, detailedAlbumMedia, sortedMedia]);
 
   // Share handlers
   const handleShareSelected = () => {
-    const selectedList = mediaItems.filter((i) => selectedIds.has(i.id));
+    const selectedList = mediaItems.filter(i => selectedIds.has(i.id));
     if (selectedList.length > 0) {
       setShareableItems(selectedList);
       setIsShareModalOpen(true);
@@ -300,22 +303,25 @@ function AppContent() {
     const count = selectedIds.size;
     Alert.alert(
       'Delete Media',
-      `Are you sure you want to delete ${count} ${count === 1 ? 'item' : 'items'}?`,
+      `Are you sure you want to delete ${count} ${
+        count === 1 ? 'item' : 'items'
+      }?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            const remaining = mediaItems.filter((i) => !selectedIds.has(i.id));
+            const remaining = mediaItems.filter(i => !selectedIds.has(i.id));
             setMediaItems(remaining);
 
             // Update albums and automatically delete any album that has 0 items
-            setAlbums((prev) =>
+            setAlbums(prev =>
               prev
-                .map((alb) => {
-                  const albumMedia = remaining.filter((i) => {
-                    if (alb.id === 'videos' || alb.id === 'video') return i.type === 'video';
+                .map(alb => {
+                  const albumMedia = remaining.filter(i => {
+                    if (alb.id === 'videos' || alb.id === 'video')
+                      return i.type === 'video';
                     return i.albumId === alb.id;
                   });
                   return {
@@ -324,13 +330,17 @@ function AppContent() {
                     coverUri: albumMedia[0]?.uri || alb.coverUri,
                   };
                 })
-                .filter((alb) => alb.count > 0)
+                .filter(alb => alb.count > 0),
             );
 
             // If the active open album became empty, exit detail view
             if (activeDetailedAlbum) {
-              const remainingInActive = remaining.filter((i) => {
-                if (activeDetailedAlbum.id === 'videos' || activeDetailedAlbum.id === 'video') return i.type === 'video';
+              const remainingInActive = remaining.filter(i => {
+                if (
+                  activeDetailedAlbum.id === 'videos' ||
+                  activeDetailedAlbum.id === 'video'
+                )
+                  return i.type === 'video';
                 return i.albumId === activeDetailedAlbum.id;
               });
               if (remainingInActive.length === 0) {
@@ -341,74 +351,84 @@ function AppContent() {
             handleExitSelection();
           },
         },
-      ]
+      ],
     );
   };
 
   const handleDeleteSingle = (item: MediaItem) => {
-    Alert.alert('Delete Media', `Are you sure you want to delete "${item.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          const remaining = mediaItems.filter((i) => i.id !== item.id);
-          setMediaItems(remaining);
+    Alert.alert(
+      'Delete Media',
+      `Are you sure you want to delete "${item.title}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            const remaining = mediaItems.filter(i => i.id !== item.id);
+            setMediaItems(remaining);
 
-          // Update albums and automatically delete any album that has 0 items
-          setAlbums((prev) =>
-            prev
-              .map((alb) => {
-                const albumMedia = remaining.filter((i) => {
-                  if (alb.id === 'videos' || alb.id === 'video') return i.type === 'video';
-                  return i.albumId === alb.id;
-                });
-                return {
-                  ...alb,
-                  count: albumMedia.length,
-                  coverUri: albumMedia[0]?.uri || alb.coverUri,
-                };
-              })
-              .filter((alb) => alb.count > 0)
-          );
+            setAlbums(prev =>
+              prev
+                .map(alb => {
+                  const albumMedia = remaining.filter(i => {
+                    if (alb.id === 'videos' || alb.id === 'video')
+                      return i.type === 'video';
+                    return i.albumId === alb.id;
+                  });
+                  return {
+                    ...alb,
+                    count: albumMedia.length,
+                    coverUri: albumMedia[0]?.uri || alb.coverUri,
+                  };
+                })
+                .filter(alb => alb.count > 0),
+            );
 
-          // If the active open album became empty, exit detail view
-          if (activeDetailedAlbum) {
-            const remainingInActive = remaining.filter((i) => {
-              if (activeDetailedAlbum.id === 'videos' || activeDetailedAlbum.id === 'video') return i.type === 'video';
-              return i.albumId === activeDetailedAlbum.id;
-            });
-            if (remainingInActive.length === 0) {
-              setActiveDetailedAlbum(null);
+            // If the active open album became empty, exit detail view
+            if (activeDetailedAlbum) {
+              const remainingInActive = remaining.filter(i => {
+                if (
+                  activeDetailedAlbum.id === 'videos' ||
+                  activeDetailedAlbum.id === 'video'
+                )
+                  return i.type === 'video';
+                return i.albumId === activeDetailedAlbum.id;
+              });
+              if (remainingInActive.length === 0) {
+                setActiveDetailedAlbum(null);
+              }
             }
-          }
 
-          setViewingItem(null);
+            setViewingItem(null);
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleToggleFavoriteMedia = (itemId: string) => {
-    setMediaItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
-      )
+    setMediaItems(prev =>
+      prev.map(item =>
+        item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item,
+      ),
     );
     if (viewingItem && viewingItem.id === itemId) {
-      setViewingItem((prev) => (prev ? { ...prev, isFavorite: !prev.isFavorite } : null));
+      setViewingItem(prev =>
+        prev ? { ...prev, isFavorite: !prev.isFavorite } : null,
+      );
     }
   };
 
   const handleToggleFavoriteAlbum = (albumId: string) => {
-    setAlbums((prev) =>
-      prev.map((alb) =>
-        alb.id === albumId ? { ...alb, isFavorite: !alb.isFavorite } : alb
-      )
+    setAlbums(prev =>
+      prev.map(alb =>
+        alb.id === albumId ? { ...alb, isFavorite: !alb.isFavorite } : alb,
+      ),
     );
     if (activeDetailedAlbum && activeDetailedAlbum.id === albumId) {
-      setActiveDetailedAlbum((prev) =>
-        prev ? { ...prev, isFavorite: !prev.isFavorite } : null
+      setActiveDetailedAlbum(prev =>
+        prev ? { ...prev, isFavorite: !prev.isFavorite } : null,
       );
     }
   };
@@ -420,24 +440,24 @@ function AppContent() {
   const handleCreateAlbum = (newAlbum: Album, assignedMediaIds: string[]) => {
     if (assignedMediaIds.length > 0) {
       const assignedSet = new Set(assignedMediaIds);
-      setMediaItems((prev) =>
-        prev.map((item) =>
-          assignedSet.has(item.id) ? { ...item, albumId: newAlbum.id } : item
-        )
+      setMediaItems(prev =>
+        prev.map(item =>
+          assignedSet.has(item.id) ? { ...item, albumId: newAlbum.id } : item,
+        ),
       );
     }
-    setAlbums((prev) => [newAlbum, ...prev]);
+    setAlbums(prev => [newAlbum, ...prev]);
   };
 
   const handleAddMediaFromCamera = (newMedia: MediaItem) => {
-    setMediaItems((prev) => [newMedia, ...prev]);
-    setAlbums((prev) => {
-      const cameraAlbumExists = prev.some((a) => a.id === 'camera');
+    setMediaItems(prev => [newMedia, ...prev]);
+    setAlbums(prev => {
+      const cameraAlbumExists = prev.some(a => a.id === 'camera');
       if (cameraAlbumExists) {
-        return prev.map((alb) =>
+        return prev.map(alb =>
           alb.id === 'camera'
             ? { ...alb, count: alb.count + 1, coverUri: newMedia.uri }
-            : alb
+            : alb,
         );
       } else {
         const newCamAlbum: Album = {
@@ -530,7 +550,7 @@ function AppContent() {
       {/* Segmented Dual Tab: Photos / Albums */}
       <TabSelector
         activeTab={activeTab}
-        onSelectTab={(tab) => {
+        onSelectTab={tab => {
           if (isSelectionMode) handleExitSelection();
           setActiveTab(tab);
         }}

@@ -15,17 +15,11 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { Album, MediaItem } from '../types';
+import { Album, CreateAlbumModalProps, MediaItem } from '../types';
 import { CheckIcon, CloseIcon } from './Icons';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-interface CreateAlbumModalProps {
-  visible: boolean;
-  availableMedia: MediaItem[];
-  onClose: () => void;
-  onCreateAlbum: (newAlbum: Album, selectedMediaIds: string[]) => void;
-}
 
 export const CreateAlbumModal: React.FC<CreateAlbumModalProps> = ({
   visible,

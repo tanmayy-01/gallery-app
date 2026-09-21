@@ -1,11 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ActiveTab } from '../types';
+import { TabSelectorProps } from '../types';
 
-interface TabSelectorProps {
-  activeTab: ActiveTab;
-  onSelectTab: (tab: ActiveTab) => void;
-}
 
 export const TabSelector: React.FC<TabSelectorProps> = ({
   activeTab,

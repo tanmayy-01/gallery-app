@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Alert,
-  Dimensions,
   Image,
   Modal,
   Platform,
@@ -13,30 +12,16 @@ import {
   View,
 } from 'react-native';
 import RNShare, { Social } from 'react-native-share';
-import { MediaItem } from '../types';
-import { CloseIcon, ShareIcon } from './Icons';
+import { ShareDestination, ShareModalProps } from '../types';
+import { CloseIcon, Ionicons, ShareIcon } from './Icons';
 
-interface ShareModalProps {
-  visible: boolean;
-  items: MediaItem[];
-  onClose: () => void;
-}
-
-interface ShareDestination {
-  id: string;
-  name: string;
-  color: string;
-  iconText: string;
-  social?: string;
-  packageName?: string;
-}
 
 const DESTINATIONS: ShareDestination[] = [
   {
     id: 'whatsapp',
     name: 'WhatsApp',
     color: '#25D366',
-    iconText: 'WA',
+    iconName: 'logo-whatsapp',
     social: Social.Whatsapp,
     packageName: 'com.whatsapp',
   },
@@ -44,7 +29,7 @@ const DESTINATIONS: ShareDestination[] = [
     id: 'instagram',
     name: 'Instagram',
     color: '#E1306C',
-    iconText: 'IG',
+    iconName: 'logo-instagram',
     social: Social.Instagram,
     packageName: 'com.instagram.android',
   },
@@ -52,7 +37,7 @@ const DESTINATIONS: ShareDestination[] = [
     id: 'telegram',
     name: 'Telegram',
     color: '#2AABEE',
-    iconText: 'TG',
+    iconName: 'paper-plane',
     social: Social.Telegram,
     packageName: 'org.telegram.messenger',
   },
@@ -60,7 +45,7 @@ const DESTINATIONS: ShareDestination[] = [
     id: 'facebook',
     name: 'Facebook',
     color: '#1877F2',
-    iconText: 'FB',
+    iconName: 'logo-facebook',
     social: Social.Facebook,
     packageName: 'com.facebook.katana',
   },
@@ -68,7 +53,7 @@ const DESTINATIONS: ShareDestination[] = [
     id: 'twitter',
     name: 'X / Twitter',
     color: '#000000',
-    iconText: '𝕏',
+    iconName: 'logo-twitter',
     social: Social.Twitter,
     packageName: 'com.twitter.android',
   },
@@ -76,21 +61,21 @@ const DESTINATIONS: ShareDestination[] = [
     id: 'email',
     name: 'Email',
     color: '#EA4335',
-    iconText: '✉',
+    iconName: 'mail',
     social: Social.Email,
   },
   {
     id: 'sms',
     name: 'Messages',
     color: '#34C759',
-    iconText: 'SMS',
+    iconName: 'chatbubble-ellipses',
     social: Social.Sms,
   },
   {
     id: 'system',
     name: 'More',
     color: '#3E4330',
-    iconText: '•••',
+    iconName: 'ellipsis-horizontal',
   },
 ];
 
@@ -201,7 +186,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       id: 'system',
       name: 'System Share',
       color: '#3E4330',
-      iconText: '•••',
+      iconName: 'ellipsis-horizontal',
     });
   };
 
@@ -279,7 +264,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     activeOpacity={0.75}
                   >
                     <View style={[styles.destIconWrapper, { backgroundColor: dest.color }]}>
-                      <Text style={styles.destIconText}>{dest.iconText}</Text>
+                      <Ionicons name={dest.iconName as any} size={22} color="#FFFFFF" />
                     </View>
                     <Text style={styles.destName} numberOfLines={1}>
                       {dest.name}

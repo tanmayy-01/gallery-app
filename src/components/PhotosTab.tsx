@@ -7,31 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MediaItem } from '../types';
+import { MediaItem, MonthSectionData, PhotosTabProps, SectionBlockProps } from '../types';
 import { GAP, HORIZONTAL_PADDING, PhotoGridItem } from './PhotoGridItem';
 
-interface MonthSectionData {
-  title: string;
-  data: MediaItem[];
-}
-
-interface PhotosTabProps {
-  sections: MonthSectionData[];
-  selectedIds: Set<string>;
-  isSelectionMode: boolean;
-  onPressItem: (item: MediaItem) => void;
-  onLongPressItem: (item: MediaItem) => void;
-  activeAlbumTitle?: string | null;
-  onClearAlbumFilter?: () => void;
-}
-
-interface SectionBlockProps {
-  section: MonthSectionData;
-  selectedIds: Set<string>;
-  isSelectionMode: boolean;
-  onPressItem: (item: MediaItem) => void;
-  onLongPressItem: (item: MediaItem) => void;
-}
 
 const SectionBlock = memo<SectionBlockProps>(
   ({ section, selectedIds, isSelectionMode, onPressItem, onLongPressItem }) => {

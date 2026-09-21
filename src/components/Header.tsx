@@ -1,19 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CameraIcon, CloseIcon, ShareIcon, SortIcon, TrashIcon } from './Icons';
+import { HeaderProps } from '../types';
 
-interface HeaderProps {
-  isSelectionMode: boolean;
-  selectedCount: number;
-  totalCount: number;
-  onExitSelection: () => void;
-  onSelectAll: () => void;
-  onShareSelected: () => void;
-  onDeleteSelected: () => void;
-  onOpenSort: () => void;
-  onPressCamera: () => void;
-  activeSortLabel: string;
-}
+
 
 export const Header: React.FC<HeaderProps> = ({
   isSelectionMode,

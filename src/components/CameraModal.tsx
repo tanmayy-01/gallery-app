@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Image,
   Modal,
   StyleSheet,
@@ -11,10 +10,10 @@ import {
   View,
 } from 'react-native';
 import { MediaItem } from '../types';
-import { CameraIcon, CloseIcon } from './Icons';
+import { CameraIcon, CloseIcon, Ionicons } from './Icons';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { monthNames, SCENE_PREVIEWS } from '../constants';
 
 interface CameraModalProps {
   visible: boolean;
@@ -22,28 +21,6 @@ interface CameraModalProps {
   onAddMedia: (newMedia: MediaItem) => void;
 }
 
-const SCENE_PREVIEWS = [
-  {
-    uri: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80',
-    title: 'Yosemite Alpine Valley',
-  },
-  {
-    uri: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1000&q=80',
-    title: 'Starry Mountain Night',
-  },
-  {
-    uri: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1000&q=80',
-    title: 'Golden Sunset Mist',
-  },
-  {
-    uri: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=80',
-    title: 'Lake Reflection & Canoes',
-  },
-  {
-    uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80',
-    title: 'Outdoor Sunny Portrait',
-  },
-];
 
 export const CameraModal: React.FC<CameraModalProps> = ({
   visible,
@@ -68,10 +45,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
     setTimeout(() => setIsFlashing(false), 150);
 
     const now = new Date();
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ];
+
     const currentMonth = monthNames[now.getMonth()];
     const sizeBytes = Math.floor(Math.random() * 3500000) + 2500000;
 
@@ -94,7 +68,6 @@ export const CameraModal: React.FC<CameraModalProps> = ({
       setSavedCount((prev) => prev + 1);
       setCustomTitle('');
       setIsSaving(false);
-      // Advance scene
       setSceneIndex((prev) => prev + 1);
     }, 400);
   };
@@ -168,7 +141,8 @@ export const CameraModal: React.FC<CameraModalProps> = ({
               onPress={() => setSceneIndex((prev) => prev + 1)}
               activeOpacity={0.7}
             >
-              <Text style={styles.switchSceneText}>Switch Scene ↻</Text>
+              <Ionicons name="refresh-outline" size={14} color="#DCE49B" style={{ marginRight: 4 }} />
+              <Text style={styles.switchSceneText}>Switch Scene</Text>
             </TouchableOpacity>
 
             {/* Shutter Button */}

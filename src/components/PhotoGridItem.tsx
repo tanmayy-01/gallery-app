@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MediaItem } from '../types';
+import { PhotoGridItemProps } from '../types';
 import { CheckIcon, PlayIcon } from './Icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -18,13 +18,6 @@ export const ITEM_SIZE = Math.floor(
   (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS
 );
 
-export interface PhotoGridItemProps {
-  item: MediaItem;
-  isSelected: boolean;
-  isSelectionMode: boolean;
-  onPress: (item: MediaItem) => void;
-  onLongPress: (item: MediaItem) => void;
-}
 
 export const PhotoGridItem = memo<PhotoGridItemProps>(
   ({ item, isSelected, isSelectionMode, onPress, onLongPress }) => {
