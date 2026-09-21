@@ -1,7 +1,8 @@
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
-import { PermissionsAndroid, Platform } from 'react-native';
+import { Alert, PermissionsAndroid, Platform } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Album, MediaItem } from '../types';
+import { monthNames } from '../constants';
 
 /**
  * Request required storage and camera permissions on Android
@@ -60,10 +61,7 @@ export function formatBytes(bytes: number): string {
  */
 export function getMonthSection(timestampSecOrMs: number): { month: string; year: number; sectionKey: string } {
   const date = new Date(timestampSecOrMs > 10000000000 ? timestampSecOrMs : timestampSecOrMs * 1000);
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
+
   const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
   return {
@@ -277,7 +275,7 @@ export async function openRealDeviceCamera(): Promise<MediaItem | null> {
 
     const result = await launchCamera({
       mediaType: 'photo',
-      saveToPhotos: true, // Saves directly to device gallery/camera roll
+      saveToPhotos: false, // Save through CameraRoll below to obtain the real MediaStore content:// URI
       quality: 1,
       includeExtra: true,
     });
@@ -289,18 +287,28 @@ export async function openRealDeviceCamera(): Promise<MediaItem | null> {
     const asset = result.assets[0];
     if (!asset.uri) return null;
 
+    let mediaUri = asset.uri;
+    try {
+      // Save directly to CameraRoll and retrieve the real content:// MediaStore URI
+      const savedUri = await CameraRoll.save(asset.uri, {
+        type: 'photo',
+        album: 'Camera',
+      });
+      if (savedUri) {
+        mediaUri = savedUri;
+      }
+    } catch (saveErr) {
+      console.warn('Could not save captured photo to CameraRoll:', saveErr);
+    }
+
     const now = new Date();
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ];
     const month = monthNames[now.getMonth()];
     const year = now.getFullYear();
     const size = asset.fileSize || 0;
 
     const newMedia: MediaItem = {
       id: 'cam_' + Date.now(),
-      uri: asset.uri,
+      uri: mediaUri,
       type: 'photo',
       title: asset.fileName || `Photo ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
       date: now.toISOString(),
@@ -339,10 +347,6 @@ export async function importFromDeviceLibrary(): Promise<MediaItem[]> {
     }
 
     const now = new Date();
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ];
     const month = monthNames[now.getMonth()];
     const year = now.getFullYear();
 
@@ -384,3 +388,42 @@ export async function importFromDeviceLibrary(): Promise<MediaItem[]> {
     return [];
   }
 }
+
+/**
+ * Delete media files from the physical device storage / gallery.
+ */
+export async function deleteDeviceMedia(uris: string[]): Promise<boolean> {
+  if (!uris || uris.length === 0) {
+    return true;
+  }
+
+  const contentUris = uris.filter((u) => u && u.startsWith('content://'));
+
+  if (contentUris.length === 0) {
+    return true;
+  }
+
+  try {
+    await requestMediaPermissions();
+    await CameraRoll.deletePhotos(contentUris);
+    return true;
+  } catch (error: any) {
+    console.warn('Error deleting media from device gallery:', error);
+
+    const errorMessage = error?.message || '';
+    const isUserCancelled =
+      errorMessage.includes('Deletion was not completed') ||
+      errorMessage.includes('cancelled') ||
+      errorMessage.includes('Canceled') ||
+      error?.code === 'E_CANCELLED';
+
+    if (!isUserCancelled) {
+      Alert.alert(
+        'Deletion Failed',
+        'Could not delete the selected media from your device. Please ensure storage permissions are granted.',
+      );
+    }
+    return false;
+  }
+}
+

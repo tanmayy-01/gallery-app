@@ -21,6 +21,7 @@ import { ShareModal } from './src/components/ShareModal';
 import { SortModal } from './src/components/SortModal';
 import { TabSelector } from './src/components/TabSelector';
 import {
+  deleteDeviceMedia,
   loadDeviceMediaAndAlbums,
   openRealDeviceCamera,
 } from './src/services/mediaService';
@@ -301,6 +302,8 @@ function AppContent() {
   // Delete handlers
   const handleDeleteSelected = () => {
     const count = selectedIds.size;
+    if (count === 0) return;
+
     Alert.alert(
       'Delete Media',
       `Are you sure you want to delete ${count} ${
@@ -311,44 +314,57 @@ function AppContent() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            const remaining = mediaItems.filter(i => !selectedIds.has(i.id));
-            setMediaItems(remaining);
+          onPress: async () => {
+            try {
+              const itemsToDelete = mediaItems.filter(i => selectedIds.has(i.id));
+              const urisToDelete = itemsToDelete.map(i => i.uri);
 
-            // Update albums and automatically delete any album that has 0 items
-            setAlbums(prev =>
-              prev
-                .map(alb => {
-                  const albumMedia = remaining.filter(i => {
-                    if (alb.id === 'videos' || alb.id === 'video')
-                      return i.type === 'video';
-                    return i.albumId === alb.id;
-                  });
-                  return {
-                    ...alb,
-                    count: albumMedia.length,
-                    coverUri: albumMedia[0]?.uri || alb.coverUri,
-                  };
-                })
-                .filter(alb => alb.count > 0),
-            );
-
-            // If the active open album became empty, exit detail view
-            if (activeDetailedAlbum) {
-              const remainingInActive = remaining.filter(i => {
-                if (
-                  activeDetailedAlbum.id === 'videos' ||
-                  activeDetailedAlbum.id === 'video'
-                )
-                  return i.type === 'video';
-                return i.albumId === activeDetailedAlbum.id;
-              });
-              if (remainingInActive.length === 0) {
-                setActiveDetailedAlbum(null);
+              const success = await deleteDeviceMedia(urisToDelete);
+              if (!success) {
+                // User cancelled the system deletion prompt or error occurred
+                return;
               }
-            }
 
-            handleExitSelection();
+              const remaining = mediaItems.filter(i => !selectedIds.has(i.id));
+              setMediaItems(remaining);
+
+              // Update albums and automatically delete any album that has 0 items
+              setAlbums(prev =>
+                prev
+                  .map(alb => {
+                    const albumMedia = remaining.filter(i => {
+                      if (alb.id === 'videos' || alb.id === 'video')
+                        return i.type === 'video';
+                      return i.albumId === alb.id;
+                    });
+                    return {
+                      ...alb,
+                      count: albumMedia.length,
+                      coverUri: albumMedia[0]?.uri || alb.coverUri,
+                    };
+                  })
+                  .filter(alb => alb.count > 0),
+              );
+
+              // If the active open album became empty, exit detail view
+              if (activeDetailedAlbum) {
+                const remainingInActive = remaining.filter(i => {
+                  if (
+                    activeDetailedAlbum.id === 'videos' ||
+                    activeDetailedAlbum.id === 'video'
+                  )
+                    return i.type === 'video';
+                  return i.albumId === activeDetailedAlbum.id;
+                });
+                if (remainingInActive.length === 0) {
+                  setActiveDetailedAlbum(null);
+                }
+              }
+
+              handleExitSelection();
+            } catch (err) {
+              console.warn('Error deleting selected items:', err);
+            }
           },
         },
       ],
@@ -364,43 +380,53 @@ function AppContent() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            const remaining = mediaItems.filter(i => i.id !== item.id);
-            setMediaItems(remaining);
-
-            setAlbums(prev =>
-              prev
-                .map(alb => {
-                  const albumMedia = remaining.filter(i => {
-                    if (alb.id === 'videos' || alb.id === 'video')
-                      return i.type === 'video';
-                    return i.albumId === alb.id;
-                  });
-                  return {
-                    ...alb,
-                    count: albumMedia.length,
-                    coverUri: albumMedia[0]?.uri || alb.coverUri,
-                  };
-                })
-                .filter(alb => alb.count > 0),
-            );
-
-            // If the active open album became empty, exit detail view
-            if (activeDetailedAlbum) {
-              const remainingInActive = remaining.filter(i => {
-                if (
-                  activeDetailedAlbum.id === 'videos' ||
-                  activeDetailedAlbum.id === 'video'
-                )
-                  return i.type === 'video';
-                return i.albumId === activeDetailedAlbum.id;
-              });
-              if (remainingInActive.length === 0) {
-                setActiveDetailedAlbum(null);
+          onPress: async () => {
+            try {
+              const success = await deleteDeviceMedia([item.uri]);
+              if (!success) {
+                // User cancelled the system deletion prompt or error occurred
+                return;
               }
-            }
 
-            setViewingItem(null);
+              const remaining = mediaItems.filter(i => i.id !== item.id);
+              setMediaItems(remaining);
+
+              setAlbums(prev =>
+                prev
+                  .map(alb => {
+                    const albumMedia = remaining.filter(i => {
+                      if (alb.id === 'videos' || alb.id === 'video')
+                        return i.type === 'video';
+                      return i.albumId === alb.id;
+                    });
+                    return {
+                      ...alb,
+                      count: albumMedia.length,
+                      coverUri: albumMedia[0]?.uri || alb.coverUri,
+                    };
+                  })
+                  .filter(alb => alb.count > 0),
+              );
+
+              // If the active open album became empty, exit detail view
+              if (activeDetailedAlbum) {
+                const remainingInActive = remaining.filter(i => {
+                  if (
+                    activeDetailedAlbum.id === 'videos' ||
+                    activeDetailedAlbum.id === 'video'
+                  )
+                    return i.type === 'video';
+                  return i.albumId === activeDetailedAlbum.id;
+                });
+                if (remainingInActive.length === 0) {
+                  setActiveDetailedAlbum(null);
+                }
+              }
+
+              setViewingItem(null);
+            } catch (err) {
+              console.warn('Error deleting single item:', err);
+            }
           },
         },
       ],
